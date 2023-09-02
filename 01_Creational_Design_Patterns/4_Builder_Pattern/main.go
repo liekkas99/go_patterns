@@ -60,7 +60,7 @@ func (b *FastFoodBuilder) GetProduct() Product {
 
 func main() {
 	builder := NewFastFoodBuilder()
-	director := NewDirector(builder) // 構建
+	director := NewDirector(builder) // 构建
 	meal := director.Construct()
 
 	fmt.Println("主菜:", meal.mainCourse)
