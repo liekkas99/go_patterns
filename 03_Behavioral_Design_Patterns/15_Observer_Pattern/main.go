@@ -1,64 +1,80 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
-// Observer 定义观察者接口
+// Observer 是观察者接口
 type Observer interface {
-	Update(message string)
+	Update(news string)
 }
 
-// Subject 定义被观察的主题接口
+// Subject 是被观察者接口
 type Subject interface {
-	RegisterObserver(observer Observer)
-	RemoveObserver(observer Observer)
-	NotifyObservers(message string)
+	Register(observer Observer)
+	Unregister(observer Observer)
+	Notify(news string)
 }
 
-// ConcreteObserver 实现了 Observer 接口
-type ConcreteObserver struct {
-	name string
-}
-
-func (o *ConcreteObserver) Update(message string) {
-	fmt.Printf("%s 收到通知：%s\n", o.name, message)
-}
-
-// ConcreteSubject 实现了 Subject 接口
-type ConcreteSubject struct {
+// NewsPublisher 是新闻发布者，实现了 Subject 接口
+type NewsPublisher struct {
 	observers []Observer
 }
 
-func (s *ConcreteSubject) RegisterObserver(observer Observer) {
-	s.observers = append(s.observers, observer)
+func NewNewsPublisher() *NewsPublisher {
+	return &NewsPublisher{}
 }
 
-func (s *ConcreteSubject) RemoveObserver(observer Observer) {
-	for i, o := range s.observers {
-		if o == observer {
-			s.observers = append(s.observers[:i], s.observers[i+1:]...)
+func (np *NewsPublisher) Register(observer Observer) {
+	np.observers = append(np.observers, observer)
+}
+
+func (np *NewsPublisher) Unregister(observer Observer) {
+	for i, obs := range np.observers {
+		if obs == observer {
+			np.observers = append(np.observers[:i], np.observers[i+1:]...)
 			break
 		}
 	}
 }
 
-func (s *ConcreteSubject) NotifyObservers(message string) {
-	for _, observer := range s.observers {
-		observer.Update(message)
+func (np *NewsPublisher) Notify(news string) {
+	for _, observer := range np.observers {
+		observer.Update(news)
 	}
 }
 
+// NewsSubscriber 是新闻订阅者，实现了 Observer 接口
+type NewsSubscriber struct {
+	name string
+}
+
+func NewNewsSubscriber(name string) *NewsSubscriber {
+	return &NewsSubscriber{name}
+}
+
+func (ns *NewsSubscriber) Update(news string) {
+	fmt.Printf("%s 收到新闻：%s\n", ns.name, news)
+}
+
 func main() {
-	subject := &ConcreteSubject{}
+	newsPublisher := NewNewsPublisher()
 
-	observer1 := &ConcreteObserver{name: "观察者1"}
-	observer2 := &ConcreteObserver{name: "观察者2"}
+	subscriber1 := NewNewsSubscriber("订阅者1")
+	subscriber2 := NewNewsSubscriber("订阅者2")
 
-	subject.RegisterObserver(observer1)
-	subject.RegisterObserver(observer2)
+	newsPublisher.Register(subscriber1)
+	newsPublisher.Register(subscriber2)
 
-	subject.NotifyObservers("新消息：Hello, 观察者们！")
+	// 模拟新闻发布
+	newsPublisher.Notify("重要新闻：今天是个好天气！")
 
-	subject.RemoveObserver(observer1)
+	// 移除一个订阅者
+	newsPublisher.Unregister(subscriber1)
 
-	subject.NotifyObservers("又有新消息：大家注意了！")
+	// 模拟新闻发布
+	newsPublisher.Notify("紧急新闻：交通事故发生！")
+
+	time.Sleep(1 * time.Second)
 }
