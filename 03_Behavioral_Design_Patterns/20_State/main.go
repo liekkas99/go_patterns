@@ -1,60 +1,63 @@
-/*
-在这个示例中，我们首先定义了状态接口 State，
-其中包含一个 Handle() 方法，用于在不同状态下处理对象的行为。
-然后，我们实现了两个具体状态类 ConcreteStateA 和 ConcreteStateB，
-分别实现了不同状态下的行为。
-
-接下来，我们定义了上下文类 Context，它持有一个状态对象，
-并通过 SetState() 方法来设置不同的状态。Request() 方法用于触发当前状态的行为处理。
-在 main 函数中，我们创建了上下文对象，并设置初始状态为 ConcreteStateA。
-通过多次调用 Request() 方法，我们可以看到对象的状态在不同情况下改变，
-从而表现出不同的行为。这就是状态模式的核心思想在 Go 中的实现方式。
-*/package main
+package main
 
 import "fmt"
 
-// State 是状态接口，定义了不同状态下的方法
+// State 是状态接口，定义了自动售货机状态下的行为
 type State interface {
-	Handle(context *Context)
+	InsertCoin()
+	PushButton()
 }
 
-// ConcreteStateA 是具体状态A
-type ConcreteStateA struct{}
-
-func (s *ConcreteStateA) Handle(context *Context) {
-	fmt.Println("Handling in State A")
-}
-
-// ConcreteStateB 是具体状态B
-type ConcreteStateB struct{}
-
-func (s *ConcreteStateB) Handle(context *Context) {
-	fmt.Println("Handling in State B")
-}
-
-// Context 是上下文类，持有一个状态对象
-type Context struct {
+// VendingMachine 是自动售货机，维护当前的状态
+type VendingMachine struct {
 	state State
 }
 
-func (c *Context) SetState(state State) {
-	c.state = state
+func NewVendingMachine() *VendingMachine {
+	return &VendingMachine{state: &NoStockState{}}
 }
 
-func (c *Context) Request() {
-	c.state.Handle(c)
+func (vm *VendingMachine) SetState(state State) {
+	vm.state = state
+}
+
+func (vm *VendingMachine) InsertCoin() {
+	vm.state.InsertCoin()
+}
+
+func (vm *VendingMachine) PushButton() {
+	vm.state.PushButton()
+}
+
+// NoStockState 是无货状态，实现了 State 接口
+type NoStockState struct{}
+
+func (nss *NoStockState) InsertCoin() {
+	fmt.Println("无法投币，商品已售罄")
+}
+
+func (nss *NoStockState) PushButton() {
+	fmt.Println("无法购买，商品已售罄")
+}
+
+// InStockState 是有货状态，实现了 State 接口
+type InStockState struct{}
+
+func (iss *InStockState) InsertCoin() {
+	fmt.Println("投币成功，等待选择商品")
+}
+
+func (iss *InStockState) PushButton() {
+	fmt.Println("商品已出售，感谢购买")
 }
 
 func main() {
-	context := Context{}
-	initialState := &ConcreteStateA{}
-	context.SetState(initialState)
+	vendingMachine := NewVendingMachine()
 
-	context.Request() // 输出: Handling in State A
+	vendingMachine.InsertCoin()
+	vendingMachine.PushButton()
 
-	context.SetState(&ConcreteStateB{})
-	context.Request() // 输出: Handling in State B
-
-	context.SetState(&ConcreteStateA{})
-	context.Request() // 输出: Handling in State A
+	vendingMachine.SetState(&InStockState{})
+	vendingMachine.InsertCoin()
+	vendingMachine.PushButton()
 }
